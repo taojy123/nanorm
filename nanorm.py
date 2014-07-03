@@ -5,7 +5,6 @@ DB_NAME = "test.db"
 cx = sqlite3.connect(DB_NAME)
 
 
-
 class Field(object):
     field_type = ""
     default = None
@@ -241,49 +240,6 @@ class Query(object):
         sql = "delete from %s where %s" % (self.table_name, self.where_sql)
         cu.execute(sql)
         cx.commit()
-
-
-
-def test():
-
-    class Student(Model):
-        name = CharField(128)
-        age = IntegerField(default=20)
-        sex = BooleanField()
-
-        def __str__(self):
-            return "%s_%s_%s_%s_%s" % (self.__class__.__name__, self.id, self.name, self.age, self.sex)
-
-    Student.query().delete()
-
-    s1 = Student()
-    s1.name = "Joe"
-    s1.age = 45
-    s1.sex = True
-    s1.save()
-
-    s2 = Student(name="Motive")
-    s2.age = 40
-    s2.save()
-
-    s3 = Student(name="Sandy", sex=False)
-    s3.save()
-
-
-    sandy = Student.query().filter(name="Sandy").first()
-    sandy.age = 32
-    sandy.save()
-
-    print sandy
-
-    print Student.gets(name="Joe")
-
-    print "ok"
-
-
-
-if __name__ == "__main__":
-    test()
 
 
 
