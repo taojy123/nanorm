@@ -60,6 +60,7 @@ class ForeignKey(Field):
 class Model(object):
 
     def __init__(self, rid=0, **kwargs):
+        self.__class__.try_create_table()
         self.table_name = self.__class__.__name__.lower()
         self.id = rid
         for name in self.field_names:
