@@ -1,4 +1,4 @@
-Nanorm:Simple ORM framework of Python
+Nanorm : A simple ORM of Python
 =========================================
 version 0.1
 
