@@ -82,6 +82,13 @@ class Model(object):
         return self.__str__()
 
 
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.id == other.id
+        
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
     @property
     def field_names(self):
