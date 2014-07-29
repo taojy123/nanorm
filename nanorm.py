@@ -16,6 +16,11 @@ def set_db_name(db_name):
     NANO_SETTINGS["cx"] = sqlite3.connect(db_name)
 
 
+def get_cursor():
+    if not NANO_SETTINGS.get("cx"):
+        NANO_SETTINGS["cx"] = sqlite3.connect(NANO_SETTINGS["db_name"])
+    return NANO_SETTINGS["cx"].cursor()
+
 
 class Field(object):
     field_type = ""
@@ -113,7 +118,7 @@ class Model(object):
 
 
     def insert(self):
-        cu = NANO_SETTINGS["cx"].cursor()
+        cu = get_cursor()
 
         field_names_sql = ", ".join(self.field_names)
         field_values_sql = ", ".join(self.field_values)
@@ -128,7 +133,7 @@ class Model(object):
 
 
     def update(self):
-        cu = NANO_SETTINGS["cx"].cursor()
+        cu = get_cursor()
 
         name_value = []
         for name, value in zip(self.field_names, self.field_values):
@@ -149,7 +154,7 @@ class Model(object):
             
 
     def delete(self):
-        cu = NANO_SETTINGS["cx"].cursor()
+        cu = get_cursor()
         sql = "delete from %s where id = %d" % (self.table_name, self.id)
         cu.execute(sql)
         NANO_SETTINGS["cx"].commit()
@@ -159,10 +164,7 @@ class Model(object):
     def try_create_table(cls):
         table_name = cls.__name__.lower()
 
-        if not NANO_SETTINGS.get("cx"):
-            set_db_name("test.db")
-
-        cu = NANO_SETTINGS["cx"].cursor()
+        cu = get_cursor()
         sql = "select * from sqlite_master where type='table' AND name='%s';" % table_name
         cu.execute(sql)
         if not cu.fetchall():
@@ -204,6 +206,7 @@ class Model(object):
 class Query(object):
 
     def __init__(self, model_class):
+        model_class.try_create_table()
         self.model_class = model_class
         self.table_name = self.model_class.__name__
         self.where_sql = "1=1"
@@ -263,7 +266,7 @@ class Query(object):
 
 
     def all(self):
-        cu = NANO_SETTINGS["cx"].cursor()
+        cu = get_cursor()
         cu.execute(self.query_sql)
         rows = cu.fetchall()
         obs = []
@@ -294,7 +297,7 @@ class Query(object):
 
 
     def delete(self):
-        cu = NANO_SETTINGS["cx"].cursor()
+        cu = get_cursor()
         sql = "delete from %s where %s" % (self.table_name, self.where_sql)
         cu.execute(sql)
         NANO_SETTINGS["cx"].commit()

@@ -20,9 +20,6 @@ class User(Model):
 
 set_db_name("nanorm.db")
 
-Area.try_create_table()
-User.try_create_table()
-
 Area.query().delete()
 User.query().delete()
 
