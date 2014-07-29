@@ -7,7 +7,7 @@ import sqlite3
 NANO_SETTINGS = {
     "type" : "sqlite3",
     "db_name" : "test.db",
-    "cx" : sqlite3.connect("test.db"),
+    #"cx" : sqlite3.connect("test.db"),
 }
 
 
@@ -158,6 +158,9 @@ class Model(object):
     @classmethod
     def try_create_table(cls):
         table_name = cls.__name__.lower()
+
+        if not NANO_SETTINGS.get("cx"):
+            set_db_name("test.db")
 
         cu = NANO_SETTINGS["cx"].cursor()
         sql = "select * from sqlite_master where type='table' AND name='%s';" % table_name
