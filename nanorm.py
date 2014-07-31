@@ -4,22 +4,23 @@
 import sqlite3
 
 
+# publib settings dict, the db_name is important
 NANO_SETTINGS = {
     "type" : "sqlite3",
     "db_name" : "test.db",
-    #"cx" : sqlite3.connect("test.db"),
 }
 
 
-def set_db_name(db_name):
-    NANO_SETTINGS["db_name"] = db_name
-    NANO_SETTINGS["cx"] = sqlite3.connect(db_name)
-
-
+# use db_name to create a database cursor
 def get_cursor():
     if not NANO_SETTINGS.get("cx"):
         NANO_SETTINGS["cx"] = sqlite3.connect(NANO_SETTINGS["db_name"])
     return NANO_SETTINGS["cx"].cursor()
+
+
+# change the db_name
+def set_db_name(db_name):
+    NANO_SETTINGS["db_name"] = db_name
 
 
 class Field(object):
