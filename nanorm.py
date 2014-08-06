@@ -3,6 +3,7 @@
 
 import sqlite3
 
+VERSION = 1.0
 
 # publib settings dict, the db_name is important
 NANO_SETTINGS = {
