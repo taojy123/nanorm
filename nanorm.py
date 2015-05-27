@@ -118,6 +118,7 @@ class Model(object):
             value = getattr(self, name)
             if isinstance(value, Model):
                 value = value.id
+            value = value.replace("'", "''")
             values.append("'%s'" % value)
         return values
 
