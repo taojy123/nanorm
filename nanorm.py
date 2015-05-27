@@ -3,25 +3,23 @@
 
 import sqlite3
 
-VERSION = 1.0
 
-# publib settings dict, the db_name is important
 NANO_SETTINGS = {
     "type" : "sqlite3",
     "db_name" : "test.db",
+    #"cx" : sqlite3.connect("test.db"),
 }
 
 
-# use db_name to create a database cursor
+def set_db_name(db_name):
+    NANO_SETTINGS["db_name"] = db_name
+    NANO_SETTINGS["cx"] = sqlite3.connect(db_name)
+
+
 def get_cursor():
     if not NANO_SETTINGS.get("cx"):
         NANO_SETTINGS["cx"] = sqlite3.connect(NANO_SETTINGS["db_name"])
     return NANO_SETTINGS["cx"].cursor()
-
-
-# change the db_name
-def set_db_name(db_name):
-    NANO_SETTINGS["db_name"] = db_name
 
 
 class Field(object):
@@ -43,6 +41,12 @@ class CharField(Field):
 class IntegerField(Field):
     def __init__(self, default=0):
         self.field_type = "integer"
+        self.default = default
+
+
+class FloatField(Field):
+    def __init__(self, default=0):
+        self.field_type = "real"
         self.default = default
 
 
