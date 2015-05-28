@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sqlite3
+import time
 
 
 NANO_SETTINGS = {
@@ -118,7 +119,16 @@ class Model(object):
             value = getattr(self, name)
             if isinstance(value, Model):
                 value = value.id
-            value = value.replace("'", "''")
+            if isinstance(value, str):
+                value = value.replace("'", "''")
+                try:
+                    value = value.decode("gbk")
+                except Exception, e:
+                    pass
+                try:
+                    value = value.decode("utf8")
+                except Exception, e:
+                    pass
             values.append("'%s'" % value)
         return values
 
