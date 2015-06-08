@@ -1,13 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# ==================================
+# Nanorm 1.4
+# ==================================
+
 import sqlite3
 import time
 
+__VERSION__ = 1.4
 
 NANO_SETTINGS = {
     "type" : "sqlite3",
     "db_name" : "test.db",
+    "auto_commit" : True,
     #"cx" : sqlite3.connect("test.db"),
 }
 
@@ -21,6 +27,20 @@ def get_cursor():
     if not NANO_SETTINGS.get("cx"):
         NANO_SETTINGS["cx"] = sqlite3.connect(NANO_SETTINGS["db_name"])
     return NANO_SETTINGS["cx"].cursor()
+
+
+def db_commit():
+    if NANO_SETTINGS["auto_commit"]:
+        NANO_SETTINGS["cx"].commit()
+
+def auto_commit_close():
+    NANO_SETTINGS["auto_commit"] = False
+
+
+def auto_commit_open():
+    NANO_SETTINGS["auto_commit"] = True
+    db_commit()
+
 
 
 class Field(object):
@@ -46,7 +66,7 @@ class IntegerField(Field):
 
 
 class FloatField(Field):
-    def __init__(self, default=0):
+    def __init__(self, default=0.0):
         self.field_type = "real"
         self.default = default
 
@@ -142,7 +162,7 @@ class Model(object):
 
         sql = "insert into %s(%s) values(%s)" % (self.table_name, field_names_sql, field_values_sql)
         cu.execute(sql)
-        NANO_SETTINGS["cx"].commit()
+        db_commit()
 
         sql = "select id from %s order by id desc;" % self.table_name
         cu.execute(sql)
@@ -159,7 +179,7 @@ class Model(object):
 
         sql = "update %s set %s where id = %d" % (self.table_name, name_value_sql, self.id)
         cu.execute(sql)
-        NANO_SETTINGS["cx"].commit()
+        db_commit()
 
 
     def save(self):
@@ -174,7 +194,7 @@ class Model(object):
         cu = get_cursor()
         sql = "delete from %s where id = %d" % (self.table_name, self.id)
         cu.execute(sql)
-        NANO_SETTINGS["cx"].commit()
+        db_commit()
 
 
     @classmethod
@@ -198,7 +218,7 @@ class Model(object):
             sql = 'create table %s ( "id" integer not null primary key %s );' % (table_name, fields_sql)
             cu.execute(sql)
 
-            NANO_SETTINGS["cx"].commit()
+            db_commit()
 
 
     @classmethod
@@ -282,42 +302,65 @@ class Query(object):
         return query
 
 
+    def _r2ob(self, r):
+        rid = r[0]
+        ob = self.model_class(rid=rid)
+        for i in range(1, len(r)):
+            name = self.field_names[i-1]
+            field = getattr(self.model_class, name)
+            if field.field_level == 0:
+                if field.field_type == "boolean":
+                    value = eval(r[i])
+                else:
+                    value = r[i]
+            elif field.field_level ==1:
+                if field.field_type == "foreignkey":
+                    fid = r[i]
+                    value = field.model_class.get(id=fid)
+            setattr(ob, name, value)
+        return ob
+
+
     def all(self):
         cu = get_cursor()
         cu.execute(self.query_sql)
         rows = cu.fetchall()
         obs = []
         for r in rows:
-            rid = r[0]
-            ob = self.model_class(rid=rid)
-            for i in range(1, len(r)):
-                name = self.field_names[i-1]
-                field = getattr(self.model_class, name)
-                if field.field_level == 0:
-                    if field.field_type == "boolean":
-                        value = eval(r[i])
-                    else:
-                        value = r[i]
-                elif field.field_level ==1:
-                    if field.field_type == "foreignkey":
-                        fid = r[i]
-                        value = field.model_class.get(id=fid)
-                setattr(ob, name, value)
+            ob = self._r2ob(r)
             obs.append(ob)
         return obs
 
 
     def first(self):
-        obs = self.all()
-        if obs:
-            return obs[0]
+        cu = get_cursor()
+        cu.execute(self.query_sql)
+        rows = cu.fetchall()
+        if rows:
+            r = rows[0]
+            ob = self._r2ob(r)
+            return ob
+        else:
+            return None
+
+
+    def last(self):
+        cu = get_cursor()
+        cu.execute(self.query_sql)
+        rows = cu.fetchall()
+        if rows:
+            r = rows[-1]
+            ob = self._r2ob(r)
+            return ob
+        else:
+            return None
 
 
     def delete(self):
         cu = get_cursor()
         sql = "delete from %s where %s" % (self.table_name, self.where_sql)
         cu.execute(sql)
-        NANO_SETTINGS["cx"].commit()
+        db_commit()
 
 
 
