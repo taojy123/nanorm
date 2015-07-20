@@ -20,12 +20,12 @@ NANO_SETTINGS = {
 
 def set_db_name(db_name):
     NANO_SETTINGS["db_name"] = db_name
-    NANO_SETTINGS["cx"] = sqlite3.connect(db_name)
+    NANO_SETTINGS["cx"] = sqlite3.connect(db_name, check_same_thread=False)
 
 
 def get_cursor():
     if not NANO_SETTINGS.get("cx"):
-        NANO_SETTINGS["cx"] = sqlite3.connect(NANO_SETTINGS["db_name"])
+        NANO_SETTINGS["cx"] = sqlite3.connect(NANO_SETTINGS["db_name"], check_same_thread=False)
     return NANO_SETTINGS["cx"].cursor()
 
 
