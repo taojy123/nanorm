@@ -1,6 +1,6 @@
 Nanorm : A simple ORM of Python
 =========================================
-version 1.5
+version 1.6
 
 
 这是一个精简的Python ORM框架。旨在于用一个文件写出ORM，提供开发小型或微型项目时的一些基本功能。

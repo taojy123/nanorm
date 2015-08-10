@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # ==================================
-# Nanorm 1.5
+# Nanorm 1.6
 # ==================================
 
 import sqlite3
 import time
 
-__VERSION__ = 1.5
+__VERSION__ = 1.6
 
 NANO_SETTINGS = {
     "type" : "sqlite3",
@@ -96,10 +96,10 @@ class Model(object):
         self.table_name = self.__class__.__name__.lower()
         self.id = rid
         for name in self.field_names:
-            field = getattr(self.__class__, name)
-            setattr(self, name, field.default)
+            field = getattr(self.__class__, name.replace("`", ""))
+            setattr(self, name.replace("`", ""), field.default)
         for key, value in kwargs.items():
-            setattr(self, key, value)
+            setattr(self, key.replace("`", ""), value)
 
 
     def __str__(self):
@@ -126,9 +126,9 @@ class Model(object):
     def field_names(self):
         names = []
         for name in dir(self.__class__):
-            var = getattr(self.__class__, name)
-            if isinstance(var, Field):
-                names.append(name)
+            var = getattr(self.__class__, name.replace("`", ""))
+            if isinstance(var, Field):                
+                names.append("`%s`"%name)
         return names
 
 
@@ -136,7 +136,7 @@ class Model(object):
     def field_values(self):
         values = []
         for name in self.field_names:
-            value = getattr(self, name)
+            value = getattr(self, name.replace("`", ""))
             if isinstance(value, Model):
                 value = value.id
             if isinstance(value, str):
@@ -160,11 +160,11 @@ class Model(object):
         field_names_sql = ", ".join(self.field_names)
         field_values_sql = ", ".join(self.field_values)
 
-        sql = "insert into %s(%s) values(%s)" % (self.table_name, field_names_sql, field_values_sql)
+        sql = "insert into `%s`(%s) values(%s)" % (self.table_name, field_names_sql, field_values_sql)
         cu.execute(sql)
         db_commit()
 
-        sql = "select id from %s order by id desc;" % self.table_name
+        sql = "select id from `%s` order by id desc;" % self.table_name
         cu.execute(sql)
         self.id = cu.fetchone()[0]
 
@@ -177,7 +177,7 @@ class Model(object):
             name_value.append("%s=%s" % (name, value))
         name_value_sql = ", ".join(name_value)
 
-        sql = "update %s set %s where id = %d" % (self.table_name, name_value_sql, self.id)
+        sql = "update `%s` set %s where id = %d" % (self.table_name, name_value_sql, self.id)
         cu.execute(sql)
         db_commit()
 
@@ -192,7 +192,7 @@ class Model(object):
 
     def delete(self):
         cu = get_cursor()
-        sql = "delete from %s where id = %d" % (self.table_name, self.id)
+        sql = "delete from `%s` where id = %d" % (self.table_name, self.id)
         cu.execute(sql)
         db_commit()
 
@@ -205,17 +205,17 @@ class Model(object):
         sql = "select * from sqlite_master where type='table' AND name='%s';" % table_name
         cu.execute(sql)
         if not cu.fetchall():
-            sql = "drop table if exists %s;" % table_name
+            sql = "drop table if exists `%s`;" % table_name
             cu.execute(sql)
 
             fields_sql = "" 
             for name in dir(cls):
-                var = getattr(cls, name)
+                var = getattr(cls, name.replace("`", ""))
                 if isinstance(var, Field):
                     field = var
                     field_sql = field.field_sql(name)
                     fields_sql += ", " + field_sql
-            sql = 'create table %s ( "id" integer not null primary key %s );' % (table_name, fields_sql)
+            sql = 'create table `%s` ( "id" integer not null primary key %s );' % (table_name, fields_sql)
             cu.execute(sql)
 
             db_commit()
@@ -265,27 +265,27 @@ class Query(object):
 
     @property
     def field_names(self):
-        field_names = []
+        names = []
         for name in dir(self.model_class):
-            var = getattr(self.model_class, name)
+            var = getattr(self.model_class, name.replace("`", ""))
             if isinstance(var, Field):
-                field_names.append(name)
-        return field_names
+                names.append("`%s`"%name)
+        return names
 
 
     @property
     def query_sql(self):
-        sql = "select * from %s where %s %s;" % (self.table_name, self.where_sql, self.order_sql)
+        sql = "select * from `%s` where %s %s;" % (self.table_name, self.where_sql, self.order_sql)
         return sql
 
 
     def filter(self, operator="=", **kwargs):
         where_sql = self.where_sql
         for name, value in kwargs.items():
-            if name in self.field_names + ["id"]:
+            if "`%s`"%name in self.field_names + ["id"]:
                 if isinstance(value, Model):
                     value = value.id
-                where_sql += " and %s %s '%s'" % (name, operator, value)
+                where_sql += " and `%s` %s '%s'" % (name, operator, value)
         query = self.__class__(self.model_class)
         query.order_sql = self.order_sql
         query.where_sql = where_sql
@@ -307,7 +307,7 @@ class Query(object):
         ob = self.model_class(rid=rid)
         for i in range(1, len(r)):
             name = self.field_names[i-1]
-            field = getattr(self.model_class, name)
+            field = getattr(self.model_class, name.replace("`", ""))
             if field.field_level == 0:
                 if field.field_type == "boolean":
                     value = eval(r[i])
@@ -317,7 +317,7 @@ class Query(object):
                 if field.field_type == "foreignkey":
                     fid = r[i]
                     value = field.model_class.get(id=fid)
-            setattr(ob, name, value)
+            setattr(ob, name.replace("`", ""), value)
         return ob
 
 
@@ -358,7 +358,7 @@ class Query(object):
 
     def delete(self):
         cu = get_cursor()
-        sql = "delete from %s where %s" % (self.table_name, self.where_sql)
+        sql = "delete from `%s` where %s" % (self.table_name, self.where_sql)
         cu.execute(sql)
         db_commit()
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # ==================================
-# testcase and user guide with Nanorm 1.4
+# testcase and user guide with Nanorm
 # ==================================
 
 from nanorm import *
