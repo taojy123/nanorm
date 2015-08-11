@@ -8,7 +8,7 @@
 import sqlite3
 import time
 
-__VERSION__ = 1.6
+__VERSION__ = 1.6.1
 
 NANO_SETTINGS = {
     "type" : "sqlite3",
@@ -282,7 +282,7 @@ class Query(object):
     def filter(self, operator="=", **kwargs):
         where_sql = self.where_sql
         for name, value in kwargs.items():
-            if "`%s`"%name in self.field_names + ["id"]:
+            if "`%s`"%name in self.field_names + ["`id`"]:
                 if isinstance(value, Model):
                     value = value.id
                 where_sql += " and `%s` %s '%s'" % (name, operator, value)

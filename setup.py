@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(name='nanorm',
       py_modules=['nanorm', 'nanorm_test'],
-      version='1.6',
+      version='1.6.1',
       keywords='sample sqlite database orm',
       description='A simple ORM framework for Python ( Nano ORM )',
       long_description='This is a streamlined Python ORM framework for SLQite3. It intended to use a file write ORM, provide some basic functions develop when small or micro projects.',
