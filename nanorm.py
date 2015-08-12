@@ -8,7 +8,7 @@
 import sqlite3
 import time
 
-__VERSION__ = 1.6.1
+__VERSION__ = "1.6.2"
 
 NANO_SETTINGS = {
     "type" : "sqlite3",
