@@ -139,7 +139,7 @@ class Model(object):
             value = getattr(self, name.replace("`", ""))
             if isinstance(value, Model):
                 value = value.id
-            if isinstance(value, str):
+            if isinstance(value, str) or isinstance(value, unicode):
                 value = value.replace("'", "''")
                 try:
                     value = value.decode("gbk")
@@ -161,6 +161,7 @@ class Model(object):
         field_values_sql = ", ".join(self.field_values)
 
         sql = "insert into `%s`(%s) values(%s)" % (self.table_name, field_names_sql, field_values_sql)
+        print [sql]
         cu.execute(sql)
         db_commit()
 
