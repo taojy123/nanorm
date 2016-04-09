@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # ==================================
-# Nanorm 1.8.1
+# Nanorm 1.8.2
 # ==================================
 
 import sqlite3
 import time
 
-__VERSION__ = "1.8.1"
+__VERSION__ = "1.8.2"
 
 NANO_SETTINGS = {
     "type" : "sqlite3",
@@ -161,7 +161,6 @@ class Model(object):
         field_values_sql = ", ".join(self.field_values)
 
         sql = "insert into `%s`(%s) values(%s)" % (self.table_name, field_names_sql, field_values_sql)
-        print [sql]
         cu.execute(sql)
         db_commit()
 
@@ -286,6 +285,16 @@ class Query(object):
             if "`%s`"%name in self.field_names + ["`id`"]:
                 if isinstance(value, Model):
                     value = value.id
+                if isinstance(value, str) or isinstance(value, unicode):
+                    value = value.replace("'", "''")
+                    try:
+                        value = value.decode("gbk")
+                    except Exception, e:
+                        pass
+                    try:
+                        value = value.decode("utf8")
+                    except Exception, e:
+                        pass
                 where_sql += " and `%s` %s '%s'" % (name, operator, value)
         query = self.__class__(self.model_class)
         query.order_sql = self.order_sql
