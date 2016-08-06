@@ -8,13 +8,18 @@
 import sqlite3
 import time
 
-__VERSION__ = "1.8.2"
+__VERSION__ = "1.8.3"
+
+"""
+Modify:
+1. add execute_sql function
+"""
+
 
 NANO_SETTINGS = {
     "type" : "sqlite3",
     "db_name" : "test.db",
     "auto_commit" : True,
-    #"cx" : sqlite3.connect("test.db"),
 }
 
 
@@ -26,7 +31,8 @@ def set_db_name(db_name):
 def get_cursor():
     if not NANO_SETTINGS.get("cx"):
         NANO_SETTINGS["cx"] = sqlite3.connect(NANO_SETTINGS["db_name"], check_same_thread=False)
-    return NANO_SETTINGS["cx"].cursor()
+    cu = NANO_SETTINGS["cx"].cursor()
+    return cu
 
 
 def db_commit():
@@ -41,6 +47,15 @@ def auto_commit_open():
     NANO_SETTINGS["auto_commit"] = True
     db_commit()
 
+
+def execute_sql(cu, sql):
+    try:
+        cu.execute(sql)
+    except Exception, e:
+        print('---------- sql failed -----------')
+        print(sql)
+        print('---------------------------------')
+        raise e
 
 
 class Field(object):
@@ -161,11 +176,11 @@ class Model(object):
         field_values_sql = ", ".join(self.field_values)
 
         sql = "insert into `%s`(%s) values(%s)" % (self.table_name, field_names_sql, field_values_sql)
-        cu.execute(sql)
+        execute_sql(cu, sql)
         db_commit()
 
         sql = "select id from `%s` order by id desc;" % self.table_name
-        cu.execute(sql)
+        execute_sql(cu, sql)
         self.id = cu.fetchone()[0]
 
 
@@ -178,7 +193,7 @@ class Model(object):
         name_value_sql = ", ".join(name_value)
 
         sql = "update `%s` set %s where id = %d" % (self.table_name, name_value_sql, self.id)
-        cu.execute(sql)
+        execute_sql(cu, sql)
         db_commit()
 
 
@@ -193,7 +208,7 @@ class Model(object):
     def delete(self):
         cu = get_cursor()
         sql = "delete from `%s` where id = %d" % (self.table_name, self.id)
-        cu.execute(sql)
+        execute_sql(cu, sql)
         db_commit()
 
 
@@ -203,10 +218,10 @@ class Model(object):
 
         cu = get_cursor()
         sql = "select * from sqlite_master where type='table' AND name='%s';" % table_name
-        cu.execute(sql)
+        execute_sql(cu, sql)
         if not cu.fetchall():
             sql = "drop table if exists `%s`;" % table_name
-            cu.execute(sql)
+            execute_sql(cu, sql)
 
             fields_sql = "" 
             for name in dir(cls):
@@ -216,7 +231,7 @@ class Model(object):
                     field_sql = field.field_sql(name)
                     fields_sql += ", " + field_sql
             sql = 'create table `%s` ( "id" integer not null primary key %s );' % (table_name, fields_sql)
-            cu.execute(sql)
+            execute_sql(cu, sql)
 
             db_commit()
 
@@ -333,7 +348,8 @@ class Query(object):
 
     def all(self):
         cu = get_cursor()
-        cu.execute(self.query_sql)
+        sql = self.query_sql
+        execute_sql(cu, sql)
         rows = cu.fetchall()
         obs = []
         for r in rows:
@@ -344,7 +360,8 @@ class Query(object):
 
     def first(self):
         cu = get_cursor()
-        cu.execute(self.query_sql)
+        sql = self.query_sql
+        execute_sql(cu, sql)
         rows = cu.fetchall()
         if rows:
             r = rows[0]
@@ -356,7 +373,8 @@ class Query(object):
 
     def last(self):
         cu = get_cursor()
-        cu.execute(self.query_sql)
+        sql = self.query_sql
+        execute_sql(cu, sql)
         rows = cu.fetchall()
         if rows:
             r = rows[-1]
@@ -369,7 +387,7 @@ class Query(object):
     def delete(self):
         cu = get_cursor()
         sql = "delete from `%s` where %s" % (self.table_name, self.where_sql)
-        cu.execute(sql)
+        execute_sql(cu, sql)
         db_commit()
 
 
