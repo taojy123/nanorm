@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # ==================================
-# Nanorm 1.8
+# Nanorm 1.8.1
 # ==================================
 
 import sqlite3
 import time
 
-__VERSION__ = "1.6.2"
+__VERSION__ = "1.8.1"
 
 NANO_SETTINGS = {
     "type" : "sqlite3",
