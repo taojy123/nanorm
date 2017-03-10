@@ -18,6 +18,11 @@ version 1.8.2
 
 如何使用？
 ---------
+安装：
+```
+pip install nanorm
+```
+
 下面是一个最简单的例子，具体的高级功能和用法可参照 test.py 文件中的测试用例：
 ```python
 from nanorm import *
