@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # ==================================
-# Nanorm 1.8.2
+# Nanorm 1.8.4
 # ==================================
 
 import sqlite3
 import time
 
-__VERSION__ = "1.8.3"
+__VERSION__ = "1.8.4"
 
 """
 Modify:
@@ -336,6 +336,10 @@ class Query(object):
             if field.field_level == 0:
                 if field.field_type == "boolean":
                     value = eval(r[i])
+                    try:
+                        value = bool(value)
+                    except Exception as e:
+                        pass
                 else:
                     value = r[i]
             elif field.field_level ==1:
