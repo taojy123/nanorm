@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 # ==================================
-# Nanorm 1.8.4
+# Nanorm 1.8.5
 # ==================================
 
 import sqlite3
 import time
 
-__VERSION__ = "1.8.4"
+__VERSION__ = "1.8.5"
 
 """
 Modify:

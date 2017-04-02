@@ -51,3 +51,8 @@ s1.save()
 joe = User.get(age=45)
 
 print joe
+
+
+
+
+
