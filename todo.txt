@@ -6,6 +6,6 @@ Test case                     ok
 多对多关联关系
 添加注释说明
 添加日期字段类型
-改进Boolean字段
+改进Boolean字段			ok
 更多匹配查询方式
 对象之间相等关系              ok
