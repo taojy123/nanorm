@@ -1,6 +1,6 @@
 Nanorm : A simple ORM of Python
 =========================================
-version 1.8.4
+version 1.8.5
 
 
 这是一个精简的Python ORM框架。旨在于用一个文件写出ORM，提供开发小型或微型项目时的一些基本功能。
@@ -24,6 +24,7 @@ pip install nanorm
 ```
 
 下面是一个最简单的例子，具体的高级功能和用法可参照 test.py 文件中的测试用例：
+
 ```python
 from nanorm import *
 
@@ -44,3 +45,15 @@ joe = User.get(age=45)
 print joe
 
 ```
+
+
+
+上传到 pypi 步骤
+---------
+
+1、改 nanorm, readme 中版本号
+
+2、python setup.py register
+
+3、python setup.py sdist bdist_wheel upload
+
