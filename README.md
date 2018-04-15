@@ -1,6 +1,6 @@
 Nanorm : A simple ORM of Python
 =========================================
-version 1.8.5
+version 1.9.2
 
 
 这是一个精简的Python ORM框架。旨在于用一个文件写出ORM，提供开发小型或微型项目时的一些基本功能。
@@ -53,7 +53,7 @@ print joe
 
 1、改 nanorm, readme 中版本号
 
-2、python setup.py register
+2、python setup.py sdist build
 
-3、python setup.py sdist bdist_wheel upload
+3、twine upload dist/*    (sudo pip install twine)
 

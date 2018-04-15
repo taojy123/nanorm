@@ -2,17 +2,19 @@
 # -*- coding: utf-8 -*-
 
 # ==================================
-# Nanorm 1.8.5
+# Nanorm - Nano ORM
 # ==================================
 
 import sqlite3
 import time
+import thread
 
-__VERSION__ = "1.8.5"
+
+__VERSION__ = "1.9.2"
 
 """
-Modify:
-1. add execute_sql function
+New Feature:
+1. add thread lock
 """
 
 
@@ -20,14 +22,34 @@ NANO_SETTINGS = {
     "type" : "sqlite3",
     "db_name" : "test.db",
     "auto_commit" : True,
+    "mutex_seconds": 1,
 }
 
 
+lock = thread.allocate_lock()
+
+
+def mutex(func):
+
+    def wrapper(*arg, **kwargs):
+        global lock, NANO_SETTINGS
+        while not lock.acquire(False):
+            print 'mutex wait...'
+            time.sleep(NANO_SETTINGS["mutex_seconds"])
+        r = func(*arg, **kwargs)
+        lock.release()
+        return r
+
+    return wrapper
+
+
+@mutex
 def set_db_name(db_name):
     NANO_SETTINGS["db_name"] = db_name
     NANO_SETTINGS["cx"] = sqlite3.connect(db_name, check_same_thread=False)
 
 
+@mutex
 def get_cursor():
     if not NANO_SETTINGS.get("cx"):
         NANO_SETTINGS["cx"] = sqlite3.connect(NANO_SETTINGS["db_name"], check_same_thread=False)
@@ -35,6 +57,7 @@ def get_cursor():
     return cu
 
 
+@mutex
 def db_commit():
     if NANO_SETTINGS["auto_commit"]:
         NANO_SETTINGS["cx"].commit()
@@ -48,6 +71,7 @@ def auto_commit_open():
     db_commit()
 
 
+@mutex
 def execute_sql(cu, sql):
     try:
         cu.execute(sql)
