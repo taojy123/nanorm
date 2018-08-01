@@ -10,7 +10,7 @@ import time
 import thread
 
 
-__VERSION__ = "1.9.2"
+__VERSION__ = "1.9.5"
 
 """
 New Feature:
@@ -34,7 +34,7 @@ def mutex(func):
     def wrapper(*arg, **kwargs):
         global lock, NANO_SETTINGS
         while not lock.acquire(False):
-            print 'mutex wait...'
+            print('mutex wait...')
             time.sleep(NANO_SETTINGS["mutex_seconds"])
         r = func(*arg, **kwargs)
         lock.release()
@@ -75,7 +75,7 @@ def auto_commit_open():
 def execute_sql(cu, sql):
     try:
         cu.execute(sql)
-    except Exception, e:
+    except Exception as e:
         print('---------- sql failed -----------')
         print(sql)
         print('---------------------------------')
@@ -182,11 +182,11 @@ class Model(object):
                 value = value.replace("'", "''")
                 try:
                     value = value.decode("gbk")
-                except Exception, e:
+                except Exception as e:
                     pass
                 try:
                     value = value.decode("utf8")
-                except Exception, e:
+                except Exception as e:
                     pass
             values.append("'%s'" % value)
         return values
@@ -328,11 +328,11 @@ class Query(object):
                     value = value.replace("'", "''")
                     try:
                         value = value.decode("gbk")
-                    except Exception, e:
+                    except Exception as e:
                         pass
                     try:
                         value = value.decode("utf8")
-                    except Exception, e:
+                    except Exception as e:
                         pass
                 where_sql += " and `%s` %s '%s'" % (name, operator, value)
         query = self.__class__(self.model_class)
