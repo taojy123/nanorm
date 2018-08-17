@@ -6,7 +6,7 @@
 # ==================================
 
 from nanorm import *
-
+from __future__ import print_function
 
 class Area(Model):
     name = CharField()
@@ -162,5 +162,5 @@ assert len(Area.gets()) == 4
 
 # ==============================================
 
-print User.gets()
-print "Success!"
+print(User.gets())
+print("Success!")
