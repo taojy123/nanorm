@@ -7,30 +7,30 @@
 
 import sqlite3
 import time
-import thread
+try:
+    import thread
+except ImportError as e:
+    import _thread as thread
 
 
-__VERSION__ = "1.9.5"
+__VERSION__ = "1.9.6"
 
 """
 New Feature:
 1. add thread lock
 """
 
-
 NANO_SETTINGS = {
-    "type" : "sqlite3",
-    "db_name" : "test.db",
-    "auto_commit" : True,
+    "type": "sqlite3",
+    "db_name": "test.db",
+    "auto_commit": True,
     "mutex_seconds": 1,
 }
-
 
 lock = thread.allocate_lock()
 
 
 def mutex(func):
-
     def wrapper(*arg, **kwargs):
         global lock, NANO_SETTINGS
         while not lock.acquire(False):
@@ -61,6 +61,7 @@ def get_cursor():
 def db_commit():
     if NANO_SETTINGS["auto_commit"]:
         NANO_SETTINGS["cx"].commit()
+
 
 def auto_commit_close():
     NANO_SETTINGS["auto_commit"] = False
@@ -124,10 +125,8 @@ class ForeignKey(Field):
 
     def field_sql(self, field_name):
         return '"%s" integer REFERENCES "%s" ("id")' % (field_name, self.model_class.__name__.lower())
-        
 
 
-        
 class Model(object):
 
     def __init__(self, rid=0, **kwargs):
@@ -140,36 +139,29 @@ class Model(object):
         for key, value in kwargs.items():
             setattr(self, key.replace("`", ""), value)
 
-
     def __str__(self):
         return "%s_%d" % (self.__class__.__name__, self.id)
-
 
     def __unicode__(self):
         return self.__str__()
 
-
     def __repr__(self):
         return self.__str__()
 
-
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.id == other.id
-        
 
     def __ne__(self, other):
         return not self.__eq__(other)
-
 
     @property
     def field_names(self):
         names = []
         for name in dir(self.__class__):
             var = getattr(self.__class__, name.replace("`", ""))
-            if isinstance(var, Field):                
-                names.append("`%s`"%name)
+            if isinstance(var, Field):
+                names.append("`%s`" % name)
         return names
-
 
     @property
     def field_values(self):
@@ -191,8 +183,6 @@ class Model(object):
             values.append("'%s'" % value)
         return values
 
-
-
     def insert(self):
         cu = get_cursor()
 
@@ -207,7 +197,6 @@ class Model(object):
         execute_sql(cu, sql)
         self.id = cu.fetchone()[0]
 
-
     def update(self):
         cu = get_cursor()
 
@@ -220,21 +209,18 @@ class Model(object):
         execute_sql(cu, sql)
         db_commit()
 
-
     def save(self):
         if self.id:
             self.update()
         else:
             self.insert()
         return self
-            
 
     def delete(self):
         cu = get_cursor()
         sql = "delete from `%s` where id = %d" % (self.table_name, self.id)
         execute_sql(cu, sql)
         db_commit()
-
 
     @classmethod
     def try_create_table(cls):
@@ -247,7 +233,7 @@ class Model(object):
             sql = "drop table if exists `%s`;" % table_name
             execute_sql(cu, sql)
 
-            fields_sql = "" 
+            fields_sql = ""
             for name in dir(cls):
                 var = getattr(cls, name.replace("`", ""))
                 if isinstance(var, Field):
@@ -259,24 +245,20 @@ class Model(object):
 
             db_commit()
 
-
     @classmethod
     def query(cls):
         query = Query(cls)
         return query
-
 
     @classmethod
     def gets(cls, **kwargs):
         query = Query(cls)
         return query.filter(**kwargs).all()
 
-
     @classmethod
     def get(cls, **kwargs):
         query = Query(cls)
         return query.filter(**kwargs).first()
-
 
 
 class Query(object):
@@ -288,19 +270,14 @@ class Query(object):
         self.where_sql = "1=1"
         self.order_sql = ""
 
-
-
     def __str__(self):
         return "%s_%s_%s" % (self.__class__.__name__, self.table_name, self.query_sql)
-
 
     def __unicode__(self):
         return self.__str__()
 
-
     def __repr__(self):
         return self.__str__()
-
 
     @property
     def field_names(self):
@@ -308,20 +285,18 @@ class Query(object):
         for name in dir(self.model_class):
             var = getattr(self.model_class, name.replace("`", ""))
             if isinstance(var, Field):
-                names.append("`%s`"%name)
+                names.append("`%s`" % name)
         return names
-
 
     @property
     def query_sql(self):
         sql = "select * from `%s` where %s %s;" % (self.table_name, self.where_sql, self.order_sql)
         return sql
 
-
     def filter(self, operator="=", **kwargs):
         where_sql = self.where_sql
         for name, value in kwargs.items():
-            if "`%s`"%name in self.field_names + ["`id`"]:
+            if "`%s`" % name in self.field_names + ["`id`"]:
                 if isinstance(value, Model):
                     value = value.id
                 if isinstance(value, str) or isinstance(value, unicode):
@@ -340,7 +315,6 @@ class Query(object):
         query.where_sql = where_sql
         return query
 
-
     def order(self, field_name):
         order_sql = "order by " + field_name.replace("-", "")
         if field_name[0] == "-":
@@ -350,12 +324,11 @@ class Query(object):
         query.order_sql = order_sql
         return query
 
-
     def _r2ob(self, r):
         rid = r[0]
         ob = self.model_class(rid=rid)
         for i in range(1, len(r)):
-            name = self.field_names[i-1]
+            name = self.field_names[i - 1]
             field = getattr(self.model_class, name.replace("`", ""))
             if field.field_level == 0:
                 if field.field_type == "boolean":
@@ -366,13 +339,12 @@ class Query(object):
                         pass
                 else:
                     value = r[i]
-            elif field.field_level ==1:
+            elif field.field_level == 1:
                 if field.field_type == "foreignkey":
                     fid = r[i]
                     value = field.model_class.get(id=fid)
             setattr(ob, name.replace("`", ""), value)
         return ob
-
 
     def all(self):
         cu = get_cursor()
@@ -384,7 +356,6 @@ class Query(object):
             ob = self._r2ob(r)
             obs.append(ob)
         return obs
-
 
     def first(self):
         cu = get_cursor()
@@ -398,7 +369,6 @@ class Query(object):
         else:
             return None
 
-
     def last(self):
         cu = get_cursor()
         sql = self.query_sql
@@ -411,14 +381,10 @@ class Query(object):
         else:
             return None
 
-
     def delete(self):
         cu = get_cursor()
         sql = "delete from `%s` where %s" % (self.table_name, self.where_sql)
         execute_sql(cu, sql)
         db_commit()
-
-
-
 
 # THE END
