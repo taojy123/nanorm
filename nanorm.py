@@ -7,6 +7,7 @@
 
 import sqlite3
 import time
+import datetime
 try:
     import thread
 except ImportError as e:
@@ -15,10 +16,13 @@ except ImportError as e:
     unicode = str
 
 
-__VERSION__ = "1.9.8"
+__VERSION__ = "1.9.9"
 
 """
 New Feature
+
+1.9.9:
+1. add DateTimeField and DateField
 
 1.9.8:
 1. add SelfForeignKey field
@@ -93,10 +97,10 @@ def execute_sql(cu, sql):
 class Field(object):
     field_type = ""
     field_level = 0
-    default = ""
+    default = None
 
     def field_sql(self, field_name):
-        return '"%s" %s' % (field_name, self.field_type)
+        return '"%s" %s null' % (field_name, self.field_type)
 
 
 class CharField(Field):
@@ -121,6 +125,18 @@ class FloatField(Field):
 class BooleanField(Field):
     def __init__(self, default=True):
         self.field_type = "boolean"
+        self.default = default
+
+
+class DateField(Field):
+    def __init__(self, default=None):
+        self.field_type = "date"
+        self.default = default
+
+
+class DateTimeField(Field):
+    def __init__(self, default=None):
+        self.field_type = "datetime"
         self.default = default
 
 
@@ -185,11 +201,10 @@ class Model(object):
     def field_values(self):
         values = []
         for name in self.field_names:
-            value = getattr(self, name.replace("`", ""))
-            if isinstance(value, Model):
-                if isinstance(value, self.__class__) and self.id:
-                    assert self.id != value.id, 'SelfForeignKey can not set the self instance!'
-                value = value.id
+            name = name.replace("`", "")
+            value = getattr(self, name)
+            field = getattr(self.__class__, name)
+
             if isinstance(value, str) or isinstance(value, unicode):
                 value = value.replace("'", "''")
                 try:
@@ -200,6 +215,16 @@ class Model(object):
                     value = value.decode("utf8")
                 except Exception as e:
                     pass
+            if isinstance(value, Model):
+                value = value.id
+
+            if field.field_type == 'datetime' and value:
+                value = value.strftime('%Y-%m-%d %H:%M:%S.%f')
+            if field.field_type == 'date' and value:
+                value = value.strftime('%Y-%m-%d')
+            if field.field_type == 'selfforeignkey' and value:
+                assert self.id != value, 'SelfForeignKey can not set the self instance!'
+
             values.append("'%s'" % value)
         return values
 
@@ -241,6 +266,10 @@ class Model(object):
         sql = "delete from `%s` where id = %d" % (self.table_name, self.id)
         execute_sql(cu, sql)
         db_commit()
+
+    def refresh(self):
+        assert self.id, 'only saved instance can be refreshed'
+        return self.__class__.get(id=self.id)
 
     @classmethod
     def try_create_table(cls):
@@ -355,23 +384,28 @@ class Query(object):
             field = getattr(self.model_class, name.replace("`", ""))
 
             if field.field_level == 0:
+                value = r[i]
+                value = None if value == 'None' else value
+
                 if field.field_type == "boolean":
-                    value = eval(r[i])
+                    value = eval(value)
                     try:
                         value = bool(value)
                     except Exception as e:
                         pass
-                else:
-                    value = r[i]
+                if field.field_type == "datetime" and value:
+                    value = datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%S.%f') if value else None
+                if field.field_type == "date" and value:
+                    value = datetime.datetime.strptime(value, '%Y-%m-%d').date() if value else None
+
             elif field.field_level == 1:
-                if field.field_type in ["foreignkey", "selfforeignkey"]:
-                    if field.field_type == "selfforeignkey":
-                        field.model_class = self.model_class
-                    fid = r[i]
-                    if fid:
-                        value = field.model_class.get(id=fid)
-                    else:
-                        value = None
+                if field.field_type == "selfforeignkey":
+                    field.model_class = self.model_class
+                fid = r[i]
+                if fid:
+                    value = field.model_class.get(id=fid)
+                else:
+                    value = None
 
             setattr(ob, name.replace("`", ""), value)
         return ob
