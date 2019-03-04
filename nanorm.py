@@ -15,10 +15,15 @@ except ImportError as e:
     unicode = str
 
 
-__VERSION__ = "1.9.7"
+__VERSION__ = "1.9.8"
 
 """
-New Feature:
+New Feature
+
+1.9.8:
+1. add SelfForeignKey field
+
+1.9.7:
 1. add thread lock
 """
 
@@ -126,7 +131,18 @@ class ForeignKey(Field):
         self.model_class = model_class
 
     def field_sql(self, field_name):
-        return '"%s" integer REFERENCES "%s" ("id")' % (field_name, self.model_class.__name__.lower())
+        foreign_to = self.model_class.__name__.lower()
+        return '"%s" integer NULL REFERENCES "%s" ("id")' % (field_name, foreign_to)
+
+
+class SelfForeignKey(Field):
+    def __init__(self):
+        self.field_type = "selfforeignkey"
+        self.field_level = 1
+
+    def field_sql(self, field_name, model_class):
+        foreign_to = model_class.__name__.lower()
+        return '"%s" integer NULL REFERENCES "%s" ("id")' % (field_name, foreign_to)
 
 
 class Model(object):
@@ -171,6 +187,8 @@ class Model(object):
         for name in self.field_names:
             value = getattr(self, name.replace("`", ""))
             if isinstance(value, Model):
+                if isinstance(value, self.__class__) and self.id:
+                    assert self.id != value.id, 'SelfForeignKey can not set the self instance!'
                 value = value.id
             if isinstance(value, str) or isinstance(value, unicode):
                 value = value.replace("'", "''")
@@ -240,9 +258,12 @@ class Model(object):
                 var = getattr(cls, name.replace("`", ""))
                 if isinstance(var, Field):
                     field = var
-                    field_sql = field.field_sql(name)
+                    if isinstance(field, SelfForeignKey):
+                        field_sql = field.field_sql(name, cls)
+                    else:
+                        field_sql = field.field_sql(name)
                     fields_sql += ", " + field_sql
-            sql = 'create table `%s` ( "id" integer not null primary key %s );' % (table_name, fields_sql)
+            sql = 'create table `%s` ( "id" integer not null primary key autoincrement %s );' % (table_name, fields_sql)
             execute_sql(cu, sql)
 
             db_commit()
@@ -332,6 +353,7 @@ class Query(object):
         for i in range(1, len(r)):
             name = self.field_names[i - 1]
             field = getattr(self.model_class, name.replace("`", ""))
+
             if field.field_level == 0:
                 if field.field_type == "boolean":
                     value = eval(r[i])
@@ -342,9 +364,15 @@ class Query(object):
                 else:
                     value = r[i]
             elif field.field_level == 1:
-                if field.field_type == "foreignkey":
+                if field.field_type in ["foreignkey", "selfforeignkey"]:
+                    if field.field_type == "selfforeignkey":
+                        field.model_class = self.model_class
                     fid = r[i]
-                    value = field.model_class.get(id=fid)
+                    if fid:
+                        value = field.model_class.get(id=fid)
+                    else:
+                        value = None
+
             setattr(ob, name.replace("`", ""), value)
         return ob
 

@@ -18,6 +18,7 @@ class User(Model):
     score = FloatField(default=6.8) # FloatField default=0.0
     sex = BooleanField()            # BooleanField default=True
     area = ForeignKey(Area)         # ForeignKey can not be null
+    leader = SelfForeignKey() 
 
     def __str__(self):
         return "%s_%s_%s_%s_%s" % (self.__class__.__name__, self.id, self.name, self.age, self.sex)
@@ -68,7 +69,8 @@ s2.save()
 s2.area = taiwan            # modify the attribute
 s2.save()                   # save the modify
 
-motive = User.get(id=2)     # use .get(**kwargs) as same as .query().filter(**kwargs).first()
+
+motive = User.get(id=s2.id)     # use .get(**kwargs) as same as .query().filter(**kwargs).first()
 
 assert motive.area.name == "taiwan"
 
@@ -76,13 +78,19 @@ assert motive.area.name == "taiwan"
 # ==============================================
 
 
-s3 = User(name="Sandy", area=mainland)
+s3 = User(name="Sandy", area=mainland, leader=s1)
 s3.save()
+
 
 sandy = User.query().filter(name="Sandy").last()   # use last() to execute a query of get the last result
 sandy.age = 32
 sandy.sex = False
 sandy.save()
+
+assert sandy.leader == joe
+
+
+# ==============================================
 
 rs = User.gets(sex=True)    # use .gets(**kwargs) as same as .query().filter(**kwargs).all()
 
@@ -135,8 +143,8 @@ assert  s1 != s2
 
 # ==============================================
 
-s1 = User.get(id=1)                 # has the same id and no same model class
-s2 = Area.get(id=1)                 # aren't equal
+s1 = User.get(id=s1.id)                 # has the same id and no same model class
+s2 = Area.get(id=s1.id)                 # aren't equal
 
 assert  s1 != s2
 
