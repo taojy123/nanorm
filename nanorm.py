@@ -10,10 +10,12 @@ import time
 try:
     import thread
 except ImportError as e:
+    # Compatible with python3
     import _thread as thread
+    unicode = str
 
 
-__VERSION__ = "1.9.6"
+__VERSION__ = "1.9.7"
 
 """
 New Feature:
