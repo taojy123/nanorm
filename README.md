@@ -25,7 +25,7 @@ Nanorm : A simple ORM of Python
 pip install nanorm
 ```
 
-下面是一个最简单的例子，具体的高级功能和用法可参照 test.py 文件中的测试用例：
+下面是一个最简单的例子，具体的高级功能和用法可参照 nanorm_test.py 文件中的测试用例：
 
 ```python
 from nanorm import *
@@ -49,13 +49,4 @@ print joe
 ```
 
 
-
-上传到 pypi 步骤
----------
-
-1、改 nanorm, readme 中版本号
-
-2、python setup.py sdist build
-
-3、twine upload dist/*    (sudo pip install twine)
 
