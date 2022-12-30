@@ -6,6 +6,7 @@
 # ==================================
 
 from nanorm import *
+import datetime
 
 
 class Area(Model):
@@ -17,8 +18,11 @@ class User(Model):
     age = IntegerField()            # IntegerField default=0
     score = FloatField(default=6.8) # FloatField default=0.0
     sex = BooleanField()            # BooleanField default=True
-    area = ForeignKey(Area)         # ForeignKey can not be null
-    leader = SelfForeignKey() 
+    area = ForeignKey(Area)         # ForeignKey
+    leader = SelfForeignKey()
+    join_date = DateField()
+    finish_time = DateTimeField()
+
 
     def __str__(self):
         return "%s_%s_%s_%s_%s" % (self.__class__.__name__, self.id, self.name, self.age, self.sex)
@@ -164,7 +168,21 @@ assert len(Area.gets()) == 4
 # ==============================================
 
 
+now = datetime.datetime.now()
 
+sandy.join_date = now.date()
+sandy.finish_time = now
+sandy.save()
+
+sandy = sandy.refresh()
+
+
+assert sandy.join_date == now.date()
+assert sandy.finish_time == now
+
+
+
+# ==============================================
 
 
 
