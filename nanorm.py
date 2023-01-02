@@ -16,19 +16,22 @@ except ImportError as e:
     unicode = str
 
 
-__VERSION__ = "1.9.9"
+__VERSION__ = "1.9.10"
 
 """
 New Feature
 
+1.9.10:
+add mutex timeout_seconds
+
 1.9.9:
-1. add DateTimeField and DateField
+add DateTimeField and DateField
 
 1.9.8:
-1. add SelfForeignKey field
+add SelfForeignKey field
 
 1.9.7:
-1. add thread lock
+add thread lock
 """
 
 NANO_SETTINGS = {
@@ -36,6 +39,7 @@ NANO_SETTINGS = {
     "db_name": "test.db",
     "auto_commit": True,
     "mutex_seconds": 1,
+    "timeout_seconds": 10,
 }
 
 lock = thread.allocate_lock()
@@ -44,9 +48,15 @@ lock = thread.allocate_lock()
 def mutex(func):
     def wrapper(*arg, **kwargs):
         global lock, NANO_SETTINGS
+        mutex_seconds = NANO_SETTINGS["mutex_seconds"]
+        timeout_seconds = NANO_SETTINGS["timeout_seconds"]
+        t = 0
         while not lock.acquire(False):
             print('mutex wait...')
-            time.sleep(NANO_SETTINGS["mutex_seconds"])
+            t += mutex_seconds
+            if timeout_seconds and t > timeout_seconds:
+                raise IOError('mutex lock timeout!')
+            time.sleep(mutex_seconds)
         r = func(*arg, **kwargs)
         lock.release()
         return r
