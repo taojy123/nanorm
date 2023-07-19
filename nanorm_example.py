@@ -117,13 +117,13 @@ assert s[1].name == "Joe"
 
 # ==============================================
 
-s = User.get(age="32", operator="<=")   # set operator symbol to filter data compare target field with the value
+s = User.get(age="32", op="<=")   # set operator symbol to filter data compare target field with the value
 
 assert s.name == "Sandy"
 
 # ==============================================
 
-s = User.get(name="J%", operator="like")    # also can use "like" operator to filter strings
+s = User.get(name="J%", op="like")    # also can use "like" operator to filter strings
 
 assert s.name == "Joe"
 

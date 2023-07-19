@@ -2,7 +2,6 @@ Nanorm : A simple ORM of Python
 =========================================
 
 
-
 这是一个精简的Python ORM框架。旨在于用一个文件写出ORM，提供开发小型或微型项目时的一些基本功能。
 
 
@@ -23,7 +22,7 @@ Nanorm : A simple ORM of Python
 pip install nanorm
 ```
 
-下面是一个最简单的例子，具体的高级功能和用法可参照 nanorm_test.py 文件中的测试用例：
+下面是一个最简单的例子
 
 ```python
 from nanorm import *
@@ -42,9 +41,10 @@ s1.sex = True
 s1.save()
 
 joe = User.get(age=45)
-print joe
+print(joe)
 
 ```
 
+具体的高级功能和用法可参照 `nanorm_example.py` 文件中各场景的用例
 
 
