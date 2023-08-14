@@ -145,15 +145,19 @@ class BooleanField(Field):
 
 
 class DateField(Field):
-    def __init__(self, default=None):
+    def __init__(self, default=None, auto_now_add=False, auto_now=False):
         self.field_type = "date"
         self.default = default
+        self.auto_now_add = auto_now_add
+        self.auto_now = auto_now
 
 
 class DateTimeField(Field):
-    def __init__(self, default=None):
+    def __init__(self, default=None, auto_now_add=False, auto_now=False):
         self.field_type = "datetime"
         self.default = default
+        self.auto_now_add = auto_now_add
+        self.auto_now = auto_now
 
 
 class ForeignKey(Field):
@@ -186,7 +190,14 @@ class Model(object):
         for name in self.field_names:
             assert name not in ('op', 'id', 'key'), 'field name should not be `%s`' % name
             field = getattr(self.__class__, name.replace("`", ""))
-            setattr(self, name.replace("`", ""), field.default)
+            value = field.default
+            if isinstance(field, DateTimeField) and field.auto_now_add:
+                value = datetime.datetime.now()
+            elif isinstance(field, DateField) and field.auto_now_add:
+                value = datetime.date.today()
+            if callable(value):
+                value = value()
+            setattr(self, name.replace("`", ""), value)
         for key, value in kwargs.items():
             setattr(self, key.replace("`", ""), value)
 
@@ -234,6 +245,12 @@ class Model(object):
                     pass
             if isinstance(value, Model):
                 value = value.id
+            elif isinstance(field, DateTimeField) and field.auto_now:
+                value = datetime.datetime.now()
+                setattr(self, name.replace("`", ""), value)
+            elif isinstance(field, DateField) and field.auto_now:
+                value = datetime.date.today()
+                setattr(self, name.replace("`", ""), value)
 
             if field.field_type == 'datetime' and value:
                 value = value.strftime('%Y-%m-%d %H:%M:%S.%f')
