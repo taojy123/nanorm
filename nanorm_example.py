@@ -13,6 +13,10 @@ class Area(Model):
     name = CharField()
 
 
+def tomorrow():
+    return datetime.datetime.now() + datetime.timedelta(days=1)
+
+
 class User(Model):
     name = CharField(128)           # CharField default="" max_length=255
     age = IntegerField()            # IntegerField default=0
@@ -22,11 +26,12 @@ class User(Model):
     leader = SelfForeignKey()
     join_date = DateField()
     finish_time = DateTimeField()
-
+    expire_time = DateTimeField(default=tomorrow)
+    create_time = DateTimeField(auto_now_add=True)
+    update_time = DateTimeField(auto_now=True)
 
     def __str__(self):
         return "%s_%s_%s_%s_%s" % (self.__class__.__name__, self.id, self.name, self.age, self.sex)
-
 
 
 # ==============================================
