@@ -16,10 +16,13 @@ except ImportError as e:
     unicode = str
 
 
-__VERSION__ = "1.9.12"
+__VERSION__ = "1.9.13"
 
 """
 History 
+
+1.9.13:
+add default value of datetime -- by yangtianyan
 
 1.9.12:
 fix filter for datetime 
