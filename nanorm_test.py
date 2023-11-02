@@ -6,7 +6,7 @@
 # ==================================
 
 from nanorm import *
-from __future__ import print_function
+
 
 class Area(Model):
     name = CharField()
