@@ -421,6 +421,7 @@ class Query(object):
         return query
 
     def _r2ob(self, r):
+        # 数据库查得的一行记录转为 Model 对象
         rid = r[0]
         ob = self.model_class(rid=rid)
         for i in range(1, len(r)):
