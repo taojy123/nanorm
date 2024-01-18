@@ -191,7 +191,7 @@ class Model(object):
         self.table_name = self.__class__.__name__.lower()
         self.id = rid
         for name in self.field_names:
-            assert name not in ('op', 'id', 'key'), 'field name should not be `%s`' % name
+            assert name.lower() not in ('op', 'id', 'key', 'in', 'is', 'like'), 'field name should not be `%s`' % name
             field = getattr(self.__class__, name.replace("`", ""))
             value = field.default
             if isinstance(field, DateTimeField) and field.auto_now_add:
@@ -236,7 +236,7 @@ class Model(object):
             value = getattr(self, name)
             field = getattr(self.__class__, name)
 
-            if isinstance(value, str) or isinstance(value, unicode):
+            if isinstance(value, (str, unicode)):
                 value = value.replace("'", "''")
                 try:
                     value = value.decode("gbk")
@@ -468,7 +468,7 @@ class Query(object):
 
     def first(self):
         cu = get_cursor()
-        sql = self.query_sql
+        sql = self.limit(1).query_sql
         execute_sql(cu, sql)
         rows = cu.fetchall()
         if rows:
