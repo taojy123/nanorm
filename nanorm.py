@@ -16,10 +16,13 @@ except ImportError as e:
     unicode = str
 
 
-__VERSION__ = "1.9.13"
+__VERSION__ = "1.9.14"
 
 """
 History 
+
+1.9.14:
+fix BooleanField
 
 1.9.13:
 add default value of datetime -- by yangtianyan
@@ -236,6 +239,8 @@ class Model(object):
             value = getattr(self, name)
             field = getattr(self.__class__, name)
 
+            is_string = True
+
             if isinstance(value, (str, unicode)):
                 value = value.replace("'", "''")
                 try:
@@ -246,23 +251,40 @@ class Model(object):
                     value = value.decode("utf8")
                 except Exception as e:
                     pass
+
             if isinstance(value, Model):
                 value = value.id
-            elif isinstance(field, DateTimeField) and field.auto_now:
+                is_string = False
+            
+            if isinstance(field, DateTimeField) and field.auto_now:
                 value = datetime.datetime.now()
                 setattr(self, name.replace("`", ""), value)
-            elif isinstance(field, DateField) and field.auto_now:
+            
+            if isinstance(field, DateField) and field.auto_now:
                 value = datetime.date.today()
                 setattr(self, name.replace("`", ""), value)
+            
+            if isinstance(field, BooleanField):
+                value = 'true' if value else 'false'
+                is_string = False
+
+            if isinstance(field, (IntegerField,FloatField)):
+                is_string = False 
 
             if field.field_type == 'datetime' and value:
                 value = value.strftime('%Y-%m-%d %H:%M:%S.%f')
+
             if field.field_type == 'date' and value:
                 value = value.strftime('%Y-%m-%d')
+            
             if field.field_type == 'selfforeignkey' and value:
                 assert self.id != value, 'SelfForeignKey can not set the self instance!'
 
-            values.append("'%s'" % value)
+            if is_string:
+                values.append("'%s'" % value)
+            else:
+                values.append(str(value))
+
         return values
 
     def insert(self):
@@ -387,10 +409,22 @@ class Query(object):
         where_sql = self.where_sql
         for name, value in kwargs.items():
             if "`%s`" % name in self.field_names + ["`id`"]:
+                is_string = True
+
                 if isinstance(value, Model):
                     value = value.id
+                    is_string = False
+
+                if isinstance(value, (int, float)):
+                    is_string = False
+
+                if isinstance(value, bool):
+                    value = 'true' if value else 'false'
+                    is_string = False
+                
                 if isinstance(value, datetime.datetime):
                     value = value.strftime('%Y-%m-%d %H:%M:%S.%f')
+                
                 if isinstance(value, (str, unicode)):
                     value = value.replace("'", "''")
                     try:
@@ -401,7 +435,12 @@ class Query(object):
                         value = value.decode("utf8")
                     except Exception as e:
                         pass
-                where_sql += " and `%s` %s '%s'" % (name, op, value)
+
+                if is_string:
+                    where_sql += " and `%s` %s '%s'" % (name, op, value)
+                else:
+                    where_sql += " and `%s` %s %s" % (name, op, value)
+
         query = self.__class__(self.model_class, where_sql, self.order_sql, self.limit_sql)
         return query
 
@@ -433,13 +472,15 @@ class Query(object):
                 value = None if value == 'None' else value
 
                 if field.field_type == "boolean":
-                    value = eval(value)
-                    try:
-                        value = bool(value)
-                    except Exception as e:
-                        pass
+                    if value in ['True', 'False']:
+                        # 兼容老版本
+                        value = eval(value)
+                    else:
+                        value = bool(value == 1)
+
                 if field.field_type == "datetime" and value:
                     value = datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%S.%f') if value else None
+                
                 if field.field_type == "date" and value:
                     value = datetime.datetime.strptime(value, '%Y-%m-%d').date() if value else None
 
