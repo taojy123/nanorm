@@ -103,9 +103,11 @@ assert len(rs) == 2
 
 # ==============================================
 
-s = User.query().order("age").all()     # use order() function in query to sort
+items = User.query().order("age").limit(2).all()     # order() and limit() usage 
 
-assert s[0].name == "Sandy"
+assert items[0].name == "Sandy"
+assert len(items) == 2
+
 
 # ==============================================
 

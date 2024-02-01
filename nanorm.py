@@ -16,10 +16,13 @@ except ImportError as e:
     unicode = str
 
 
-__VERSION__ = "1.9.10"
+__VERSION__ = "1.9.11"
 
 """
 New Feature
+
+1.9.11:
+add limit count in query
 
 1.9.10:
 add mutex timeout_seconds
@@ -325,12 +328,13 @@ class Model(object):
 
 class Query(object):
 
-    def __init__(self, model_class):
+    def __init__(self, model_class, where_sql='1=1', order_sql='', limit_sql=''):
         model_class.try_create_table()
         self.model_class = model_class
         self.table_name = self.model_class.__name__
-        self.where_sql = "1=1"
-        self.order_sql = ""
+        self.where_sql = where_sql
+        self.order_sql = order_sql
+        self.limit_sql = limit_sql
 
     def __str__(self):
         return "%s_%s_%s" % (self.__class__.__name__, self.table_name, self.query_sql)
@@ -352,7 +356,7 @@ class Query(object):
 
     @property
     def query_sql(self):
-        sql = "select * from `%s` where %s %s;" % (self.table_name, self.where_sql, self.order_sql)
+        sql = "select * from `%s` where %s %s %s;" % (self.table_name, self.where_sql, self.order_sql, self.limit_sql)
         return sql
 
     def filter(self, operator="=", **kwargs):
@@ -372,18 +376,19 @@ class Query(object):
                     except Exception as e:
                         pass
                 where_sql += " and `%s` %s '%s'" % (name, operator, value)
-        query = self.__class__(self.model_class)
-        query.order_sql = self.order_sql
-        query.where_sql = where_sql
+        query = self.__class__(self.model_class, where_sql, self.order_sql, self.limit_sql)
         return query
 
     def order(self, field_name):
         order_sql = "order by " + field_name.replace("-", "")
         if field_name[0] == "-":
             order_sql += " desc"
-        query = self.__class__(self.model_class)
-        query.where_sql = self.where_sql
-        query.order_sql = order_sql
+        query = self.__class__(self.model_class, self.where_sql, order_sql, self.limit_sql)
+        return query
+
+    def limit(self, count=1):
+        limit_sql = 'limit %d' % count
+        query = self.__class__(self.model_class, self.where_sql, self.order_sql, limit_sql)
         return query
 
     def _r2ob(self, r):
