@@ -10,7 +10,7 @@ except Exception as e:
 
 setup(
     name='nanorm',
-    py_modules=['nanorm', 'nanorm_test'],
+    py_modules=['nanorm', 'nanorm_example'],
     version=nanorm.__VERSION__,
     keywords='orm namo mini sample database sqlite nanorm nanoorm',
     description='A simple ORM framework for Python ( Nano ORM )',

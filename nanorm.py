@@ -16,10 +16,13 @@ except ImportError as e:
     unicode = str
 
 
-__VERSION__ = "1.9.11"
+__VERSION__ = "1.9.12"
 
 """
-New Feature
+History 
+
+1.9.12:
+fix filter for datetime 
 
 1.9.11:
 add limit count in query
@@ -181,6 +184,7 @@ class Model(object):
         self.table_name = self.__class__.__name__.lower()
         self.id = rid
         for name in self.field_names:
+            assert name not in ('op', 'id', 'key'), 'field name should not be `%s`' % name
             field = getattr(self.__class__, name.replace("`", ""))
             setattr(self, name.replace("`", ""), field.default)
         for key, value in kwargs.items():
@@ -359,13 +363,15 @@ class Query(object):
         sql = "select * from `%s` where %s %s %s;" % (self.table_name, self.where_sql, self.order_sql, self.limit_sql)
         return sql
 
-    def filter(self, operator="=", **kwargs):
+    def filter(self, op="=", **kwargs):
         where_sql = self.where_sql
         for name, value in kwargs.items():
             if "`%s`" % name in self.field_names + ["`id`"]:
                 if isinstance(value, Model):
                     value = value.id
-                if isinstance(value, str) or isinstance(value, unicode):
+                if isinstance(value, datetime.datetime):
+                    value = value.strftime('%Y-%m-%d %H:%M:%S.%f')
+                if isinstance(value, (str, unicode)):
                     value = value.replace("'", "''")
                     try:
                         value = value.decode("gbk")
@@ -375,7 +381,7 @@ class Query(object):
                         value = value.decode("utf8")
                     except Exception as e:
                         pass
-                where_sql += " and `%s` %s '%s'" % (name, operator, value)
+                where_sql += " and `%s` %s '%s'" % (name, op, value)
         query = self.__class__(self.model_class, where_sql, self.order_sql, self.limit_sql)
         return query
 
