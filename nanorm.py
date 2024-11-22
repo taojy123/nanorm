@@ -412,6 +412,9 @@ class Query(object):
         query = self.__class__(self.model_class, self.where_sql, order_sql, self.limit_sql)
         return query
 
+    def order_by(self, field_name):
+        return self.order(field_name)
+
     def limit(self, count=1):
         limit_sql = 'limit %d' % count
         query = self.__class__(self.model_class, self.where_sql, self.order_sql, limit_sql)
