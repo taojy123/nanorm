@@ -122,6 +122,12 @@ assert s[1].name == "Joe"
 
 # ==============================================
 
+s = User.query().filter(sex=True).order_by("-name").all()  # order_by() is as same as order()
+
+assert s[1].name == "Joe"
+
+# ==============================================
+
 s = User.get(age="32", op="<=")   # set operator symbol to filter data compare target field with the value
 
 assert s.name == "Sandy"
